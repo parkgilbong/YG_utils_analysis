@@ -1,4 +1,7 @@
-pandas
-matplotlib
-seaborn
-matplotlib-venn
+moviepy==2.2.1
+opencv_python==4.10.0.84
+reportlab==4.2.5
+Shapely==2.0.7
+tdt==0.6.7
+matplotlib-venn==1.1.2
+pingouin==0.5.5
