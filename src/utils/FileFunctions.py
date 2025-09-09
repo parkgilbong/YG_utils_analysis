@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List, Optional, NamedTuple
+from typing import List, Optional, NamedTuple, Dict, Set
 import pandas as pd
 import numpy as np
 import yaml
@@ -194,3 +194,41 @@ def temp_chdir(path):
     finally:
         os.chdir(prev_dir)
         print(f"[temp_chdir] Returned to directory: {prev_dir}")
+
+def ensure_dir(path: str) -> str:
+    """
+    Ensures that the directory at the specified path exists.
+
+    If the directory does not exist, it is created along with any necessary parent directories.
+
+    Args:
+        path (str): The path to the directory to ensure exists.
+
+    Returns:
+        str: The path to the ensured directory.
+    """
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def load_yaml(path: str) -> Dict:
+    """
+    Load a YAML file and return its contents as a dictionary.
+
+    Args:
+        path (str): The file path to the YAML file.
+
+    Returns:
+        Dict: The contents of the YAML file as a dictionary. Returns an empty dictionary if the file is empty.
+
+    Raises:
+        RuntimeError: If the PyYAML library is not installed.
+        FileNotFoundError: If the specified file does not exist.
+        yaml.YAMLError: If there is an error parsing the YAML file.
+    """
+    try:
+        import yaml
+    except Exception as e:
+        raise RuntimeError("PyYAML is required. Install 'pyyaml'.") from e
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}

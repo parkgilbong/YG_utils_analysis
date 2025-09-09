@@ -49,6 +49,7 @@ This updated version loads configuration from a YAML file with the following str
    export2boris: bool          # Export BORIS Excel file (default: false)
 """
 
+import os
 import argparse
 import logging
 from pathlib import Path
@@ -57,21 +58,33 @@ from datetime import datetime
 import pandas as pd
 import yaml
 
-from ..utils.DLCFunctions import (
+from utils.DLCFunctions import (
     df_to_dic_single,
     get_velocity,
     get_bodypoints_distance,
     roi_entry_analysis,
 )
-from ..utils.boris_export import extract_bouts_from_annotation, prepare_boris_export
+from utils.boris_export import extract_bouts_from_annotation, prepare_boris_export
+from utils.FileFunctions import save_config_copy
 
 
-def log_status(message: str) -> None:
-    """
-    Print a timestamped status message.
-    """
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
+# def log_status(message: str) -> None:
+#     """
+#     Print a timestamped status message.
+#     """
+#     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
 
+def setup_logging():
+    os.makedirs('logs', exist_ok=True)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('logs/dlc2boris43CT.log', mode='a'),
+            logging.StreamHandler()
+        ]
+    )
 
 def load_config(config_path: Path) -> dict:
     """
@@ -89,8 +102,10 @@ def process_animal(animal: str, session: str, config: dict, output_dir: Path) ->
     Process DLC outputs and extract movement and event metrics for one animal-session.
     Results are saved into the provided output_dir.
     """
+    setup_logging()
+
     alias = f"{config['group_id']}_{animal}"
-    log_status(f"Loading DLC data for {alias} session {session}")
+    logging.info(f"Loading DLC data for {alias} session {session}")
 
     # Build paths
     base = Path(config['root_folder']) / config['batch_folder'] / animal / session
@@ -101,13 +116,13 @@ def process_animal(animal: str, session: str, config: dict, output_dir: Path) ->
     csv_file = f"{alias}_{session}{config['dlc_scorer']}.csv"
     df = pd.read_csv(dlc_folder / csv_file, header=[1, 2])
     body_data = df_to_dic_single(df=df)
-    log_status("DLC data loaded and parsed into dictionary")
+    logging.info("DLC data loaded and parsed into dictionary")
 
     result = {}
     events = {}
 
     # 1) Compute velocity
-    log_status("Computing velocity")
+    logging.info("Computing velocity")
     time, velocity = get_velocity(
         DLCresult=body_data,
         bpt=config['bodypart4velocity'],
@@ -116,10 +131,10 @@ def process_animal(animal: str, session: str, config: dict, output_dir: Path) ->
     )
     result['Time'] = time
     result['Velocity'] = velocity
-    log_status("Velocity computed")
+    logging.info("Velocity computed")
 
     # 2) Compute proximity between two body parts
-    log_status("Computing proximity distance and epochs")
+    logging.info("Computing proximity distance and epochs")
     bpt1, bpt2 = config['bodyparts4distance']
     dist, epochs = get_bodypoints_distance(
         DLCresult=body_data,
@@ -130,10 +145,10 @@ def process_animal(animal: str, session: str, config: dict, output_dir: Path) ->
     )
     result[f"{bpt1}_{bpt2}_distance"] = dist
     result[f"{bpt1}_{bpt2}_epoch"] = epochs
-    log_status("Proximity analysis completed")
+    logging.info("Proximity analysis completed")
 
     # 3) ROI entry detection
-    log_status("Starting ROI entry detection")
+    logging.info("Starting ROI entry detection")
     for roi in config['roi_list']:
         roi_path = Path(config['roi_folder']) / f"{roi}.csv"
         if not roi_path.exists():
@@ -146,7 +161,7 @@ def process_animal(animal: str, session: str, config: dict, output_dir: Path) ->
             bpt=config['bodypart4roientry'],
             pcutoff=config['pcutoff'],
             ROI=coords)
-    log_status("ROI entry detection completed")
+    logging.info("ROI entry detection completed")
 
     # 4) Construct DataFrame for analysis
     analysis_df = pd.DataFrame(result)
@@ -156,25 +171,28 @@ def process_animal(animal: str, session: str, config: dict, output_dir: Path) ->
         filename = f"{alias}_{session}_frame_analysis.csv"
         path = output_dir / filename
         analysis_df.to_csv(path, index=False)
-        log_status(f"Per-frame analysis saved: {path}")
+        logging.info(f"Per-frame analysis saved: {path}")
 
     # 6) Extract event bouts for boolean event columns
-    log_status("Extracting event bouts from boolean columns")
+    logging.info("Extracting event bouts from boolean columns")
     evt_dict = {}
     for evt in config['event_columns']:
         series = analysis_df[evt]
         # boolean → 'on'/'off' convert
-        if pd.api.types.is_bool_dtype(series):
-            series = series.map({True:'on', False:'off'})
-        evt_dict[evt] = extract_bouts_from_annotation(series, config['fps'])
-    log_status("Event bouts extracted")
+        for evt in config['event_columns']:
+            series = analysis_df[evt]
+            # Convert to 'on'/'off' robustly, handling blanks and NaN
+            series = series.apply(lambda x: 'on' if bool(x) and str(x).strip().lower() not in ['off', 'nan', ''] else 'off')
+            evt_dict[evt] = extract_bouts_from_annotation(series, config['fps'])
+        print(evt_dict[evt])
+    logging.info("Event bouts extracted")
 
     # 7) Export BORIS file if configured
     boris_df = prepare_boris_export(evt_dict, config['fps'], animal, config["boris_behavior_map"])
     path = output_dir / f"{alias}_{session}_BORIS.xlsx"
     path.parent.mkdir(parents=True, exist_ok=True)
     boris_df.to_excel(path, index=False)
-    log_status(f"BORIS export saved: {path}")
+    logging.info(f"BORIS export saved: {path}")
 
 
 def run_dlc2boris_pipeline(config: dict) -> None:
@@ -182,21 +200,24 @@ def run_dlc2boris_pipeline(config: dict) -> None:
     Execute the DLC-to-BORIS pipeline over all specified animals and sessions.
     Creates a timestamped session directory under the configured output_dir.
     """
+    setup_logging()
+    
     base_out = Path(config['output_dir'])
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     session_output_dir = base_out / timestamp
     session_output_dir.mkdir(parents=True, exist_ok=True)
-    log_status(f"Session output directory created: {session_output_dir}")
+    logging.info(f"Session output directory created: {session_output_dir}")
 
     for animal in config['animal_id_list']:
         for session in config['session']:
-            log_status(f"Starting: {animal} - {session}")
+            logging.info(f"Starting: {animal} - {session}")
             try:
                 process_animal(animal, session, config, session_output_dir)
             except Exception as e:
                 logging.error(f"Error processing {animal} session {session}: {e}")
-            log_status(f"Finished: {animal} - {session}")
-
+            logging.info(f"Finished: {animal} - {session}")
+    save_config_copy(config, session_output_dir)
+    logging.info(f"Configuration saved to {session_output_dir / 'config_used.yaml'}")
 
 def main() -> None:
     """
