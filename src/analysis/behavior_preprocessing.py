@@ -15,8 +15,9 @@ import os
 import yaml
 import logging
 from tqdm import tqdm
-from src.utils.VideoFunctions import create_video_from_images, resize_video
-from src.utils.FileFunctions import grab_folders, save_config_copy
+from pathlib import Path
+from utils.VideoFunctions import create_video_from_images, resize_video
+from utils.FileFunctions import grab_folders, save_config_copy
 
 def setup_logging():
     os.makedirs('logs', exist_ok=True)
@@ -101,6 +102,9 @@ def preprocess_behavioral_data(config_path: str):
     """
     Read YAML config and generate videos per session, with optional per-animal segments.
     """
+    
+    setup_logging()
+
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
@@ -116,7 +120,8 @@ def preprocess_behavioral_data(config_path: str):
     codec            = config.get('codec', 'mp4v')
     resize_enabled   = config.get('resize', True)
 
-    # save_config_copy(config, config_path)
+    save_config_copy(config, Path(root_folder))
+    logging.info(f"Saved config_used.yaml to {root_folder}")
 
     tasks = []
     for group in group_list:

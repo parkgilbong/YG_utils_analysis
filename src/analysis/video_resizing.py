@@ -5,7 +5,7 @@ Separate resizing module: reads config.yaml, finds videos, and calls VideoFuncti
 import os
 import yaml
 from tqdm import tqdm
-from src.utils.VideoFunctions import resize_video
+from utils.VideoFunctions import resize_video
 
 
 def video_resizing(config_path: str):

@@ -6,9 +6,9 @@ import argparse
 import logging
 from pathlib import Path
 
-import src.utils.FPFunctions as FPFunctions
-import src.utils.FileFunctions as FileFunctions
-import src.utils.ReportGeneration as ReportGeneration
+import utils.FPFunctions as FPFunctions
+import utils.FileFunctions as FileFunctions
+import utils.ReportGeneration as ReportGeneration
 
 def setup_logging():
     os.makedirs('logs', exist_ok=True)
