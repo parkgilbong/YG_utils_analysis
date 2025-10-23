@@ -91,7 +91,7 @@ def FP_preprocessing_1ch(Tank_path:str,
             time_sec = time_seconds[ind:]
 
     elif sys == 'rwd':
-        from src.analysis.load_rwd_fpfile import load_fluorescence
+        from analysis.load_rwd_fpfile import load_fluorescence
 
         settings, FPdata = load_fluorescence(Tank_path)
 
@@ -668,6 +668,213 @@ def FP_preprocessing_2ch(Tank_path:str, Dest_folder:str, FPS: int = 25, Rec_dura
     # print('The file:Final_table_raw_trace.pkl saved successfully'
 
     return
+
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+import os
+import pandas as pd
+import numpy as np
+import pylab as plt
+import PlotFunctions
+import FileFunctions
+from scipy.signal import butter, filtfilt
+from scipy.stats import linregress
+from scipy.optimize import curve_fit
+import tdt
+
+def FP_preprocessing_2ch_new(
+    Tank_path: str,
+    Dest_folder: str,
+    Detrending_method: str = 'Exp_fit',
+    Use_CamTick: bool = True,
+    duration_mode: str = 'fixed',
+    FPS: int = 25,
+    Rec_duration: int = 600,
+    Namefor405: str = '405',
+    Namefor465: str = '465',
+    Namefor560: str = '560',
+    SaveAsCSV: bool = False
+) -> None:
+    """
+    Preprocesses two-channel FP data (465 & 560 nm) from a TDT tank file.
+
+    Args:
+        Tank_path: Path to the tank file.
+        Dest_folder: Directory to save outputs.
+        Detrending_method: 'Exp_fit' or 'Highpass_filter'.
+        Use_CamTick: Whether to align to camera ticks.
+        duration_mode: 'fixed' or 'adaptive' to select tick count.
+        FPS: Frames per second for behavior data.
+        Rec_duration: Recording duration in seconds.
+        Namefor405: Label for isosbestic channel.
+        Namefor465: Label for GCaMP channel.
+        Namefor560: Label for RGECO channel.
+        SaveAsCSV: If True, also export CSV.
+    """
+    # setup working dir
+    os.makedirs(Dest_folder, exist_ok=True)
+    FileFunctions.Set_WD(Dest_folder)
+
+    # load data
+    data = tdt.read_block(Tank_path)
+    print(f"Data loaded: {Tank_path}")
+
+    # determine CamTick indices
+    if Use_CamTick:
+        ticks = data.epocs.PtC0.onset
+        max_frames = FPS * Rec_duration
+        total = len(ticks)
+        n_frames = total if duration_mode == 'adaptive' else min(total, max_frames)
+        CamTick = ticks[:n_frames]
+        Toffset = CamTick[0]
+        df_ticks = pd.DataFrame({'original': CamTick, 'corrected': CamTick - Toffset})
+        df_ticks.to_csv('Data_CamTick.csv', index=False)
+    else:
+        Toffset = 2.0
+        CamTick = None
+
+    # extract streams
+    control = data.streams['_405A'].data
+    sig1 = data.streams['_465A'].data
+    sig2 = data.streams['_560B'].data
+    fs = data.streams['_405A'].fs
+    times = np.linspace(1, len(control), len(control)) / fs
+
+    # slice by CamTick or full
+    if Use_CamTick:
+        start = np.searchsorted(times, CamTick[0])
+        end = np.searchsorted(times, CamTick[-1])
+    else:
+        start = int(Toffset * fs)
+        end = len(times)
+    t = times[start:end]
+    c_raw = control[start:end]
+    s1_raw = sig1[start:end]
+    s2_raw = sig2[start:end]
+
+    # plot raw single-line
+    for y, name, col in [(c_raw, Namefor405, 'blue'), (s1_raw, Namefor465, 'green'), (s2_raw, Namefor560, 'red')]:
+        PlotFunctions.plot_sigle_line(
+            x=t, y=y, Fig_size=(8,4), Fig_title=name,
+            x_label='Time (sec)', y_label=f'{name} (mV)', x_lim=(None,None), y_lim=(None,None), colour=col, save=True
+        )
+
+    # plot raw dual-line
+    PlotFunctions.plot_dual_line(
+        x1=t, y1=c_raw, x2=t, y2=s1_raw, Fig_size=(10,6),
+        Fig_title=f'Raw_signal_{Namefor465}', x_label='Time (sec)',
+        y1_label=f'{Namefor405} (mV)', y2_label=f'{Namefor465} (mV)',
+        x_lim=(None,None), y1_lim=(None,None), y2_lim=(None,None), colour1='blue', colour2='green', save=True
+    )
+    PlotFunctions.plot_dual_line(
+        x1=t, y1=c_raw, x2=t, y2=s2_raw, Fig_size=(10,6),
+        Fig_title=f'Raw_signal_{Namefor560}', x_label='Time (sec)',
+        y1_label=f'{Namefor405} (mV)', y2_label=f'{Namefor560} (mV)',
+        x_lim=(None,None), y1_lim=(None,None), y2_lim=(None,None), colour1='blue', colour2='red', save=True
+    )
+
+    # smoothing
+    b,a = butter(3, 1, btype='low', fs=fs)
+    c_dn = filtfilt(b, a, c_raw)
+    s1_dn = filtfilt(b, a, s1_raw)
+    s2_dn = filtfilt(b, a, s2_raw)
+
+    # plot denoised dual-line
+    PlotFunctions.plot_dual_line(
+        x1=t, y1=s1_dn, x2=t, y2=c_dn, Fig_size=(10,6),
+        Fig_title=f'Denoised_signals_{Namefor465}', x_label='Time (sec)',
+        y1_label=f'{Namefor465}_denoised (mV)', y2_label=f'{Namefor405}_denoised (mV)',
+        x_lim=(None,None), y1_lim=(None,None), y2_lim=(None,None), colour1='green', colour2='blue', save=True
+    )
+    PlotFunctions.plot_dual_line(
+        x1=t, y1=s2_dn, x2=t, y2=c_dn, Fig_size=(10,6),
+        Fig_title=f'Denoised_signals_{Namefor560}', x_label='Time (sec)',
+        y1_label=f'{Namefor560}_denoised (mV)', y2_label=f'{Namefor405}_denoised (mV)',
+        x_lim=(None,None), y1_lim=(None,None), y2_lim=(None,None), colour1='red', colour2='blue', save=True
+    )
+
+    # detrend
+    def double_exp(x, const, af, as_, ts, tm):
+        return const + as_ * np.exp(-x/ts) + af * np.exp(-x/(ts*tm))
+
+    if Detrending_method == 'Exp_fit':
+        def fit_and_sub(x, y):
+            p0 = [max(y)/2, max(y)/4, max(y)/4, 3600, 0.1]
+            bounds = ([0,0,0,600,0], [max(y),max(y),max(y),36000,1])
+            params, _ = curve_fit(double_exp, x, y, p0=p0, bounds=bounds, maxfev=1000)
+            trend = double_exp(x, *params)
+            return trend, y - trend
+
+        c_tr, c_dt = fit_and_sub(t, c_dn)
+        s1_tr, s1_dt = fit_and_sub(t, s1_dn)
+        s2_tr, s2_dt = fit_and_sub(t, s2_dn)
+    else:
+        b2,a2 = butter(2, 0.01, btype='high', fs=fs)
+        c_dt = filtfilt(b2, a2, c_dn)
+        s1_dt = filtfilt(b2, a2, s1_dn)
+        s2_dt = filtfilt(b2, a2, s2_dn)
+        c_tr, s1_tr, s2_tr = c_dn, s1_dn, s2_dn
+
+    # motion correction computations
+    slope1, int1, r1, *_ = linregress(c_dt, s1_dt)
+    slope2, int2, r2, *_ = linregress(c_dt, s2_dt)
+    s1_cor = s1_dt - (int1 + slope1 * c_dt)
+    s2_cor = s2_dt - (int2 + slope2 * c_dt)
+
+    # motion correction plots & prints
+    plt.figure()
+    plt.scatter(c_dt[::5], s1_dt[::5], alpha=0.005, marker='.', color='green')
+    xlim = np.array(plt.xlim())
+    plt.plot(xlim, int1 + slope1 * xlim, color='green', linewidth=2)
+    plt.xlabel(Namefor405)
+    plt.ylabel(Namefor465)
+    plt.title(f'Slope: {slope1:.3f}  R^2: {r1**2:.3f}')
+    plt.savefig(f'Plot_ISOS_{Namefor465}_correlation.png')
+    print(f'{Namefor465} slope: {slope1:.3f}, R^2: {r1**2:.3f}')
+
+    plt.figure()
+    plt.scatter(c_dt[::5], s2_dt[::5], alpha=0.005, marker='.', color='red')
+    xlim = np.array(plt.xlim())
+    plt.plot(xlim, int2 + slope2 * xlim, color='red', linewidth=2)
+    plt.xlabel(Namefor405)
+    plt.ylabel(Namefor560)
+    plt.title(f'Slope: {slope2:.3f}  R^2: {r2**2:.3f}')
+    plt.savefig(f'Plot_ISOS_{Namefor560}_correlation.png')
+    print(f'{Namefor560} slope: {slope2:.3f}, R^2: {r2**2:.3f}')
+
+    # normalize & plot
+    def plot_norm(y_cor, trend, name, col):
+        df_f = 100 * y_cor / trend if Detrending_method == 'Exp_fit' else None
+        z = (y_cor - np.mean(y_cor)) / np.std(y_cor)
+        if df_f is not None:
+            PlotFunctions.plot_sigle_line(x=t, y=df_f, Fig_size=(10,6), Fig_title=f'{name}_dFF', x_label='Time (sec)', y_label=f'{name} dF/F (%)', x_lim=(None,None), y_lim=(None,None), colour=col, save=True)
+        PlotFunctions.plot_sigle_line(x=t, y=z, Fig_size=(10,6), Fig_title=f'{name}_z-score', x_label='Time (sec)', y_label=f'{name} z-score', x_lim=(None,None), y_lim=(None,None), colour=col, save=True)
+        return df_f, z
+
+    s1_df, s1_z = plot_norm(s1_cor, s1_tr, Namefor465, 'green')
+    s2_df, s2_z = plot_norm(s2_cor, s2_tr, Namefor560, 'red')
+
+    # save results
+    df = pd.DataFrame({
+        'original_time': t,
+        'time': t - Toffset,
+        f'{Namefor465}_dFF': s1_df,
+        f'{Namefor465}_z': s1_z,
+        f'{Namefor560}_dFF': s2_df,
+        f'{Namefor560}_z': s2_z,
+        'Corrected1': s1_cor,
+        'Corrected2': s2_cor,
+        'Raw1': s1_raw,
+        'Raw2': s2_raw
+    })
+    df.to_pickle('Final_table_raw_trace.pkl')
+    df.to_csv('Final_table_raw_trace.csv', index=False)
+
+    print('Completed 2ch preprocessing.')
+
 
 ########################################################################################################################
 ########################################################################################################################
