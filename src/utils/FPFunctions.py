@@ -1990,7 +1990,7 @@ def Import_manual_scoring(file_path: str, FPS: int, Event: str, UseFilter: bool 
 ########################################################################################################################
 ########################################################################################################################
 
-def calculate_auc(time, signal, intervals):
+def calculate_auc(time: np.ndarray, signal: np.ndarray, intervals: list) -> dict:
     """
     Calculate the Area Under the Curve (AUC) for specified intervals and perform statistical analysis.
     This function computes the AUC for given time intervals, as well as the AUC for adjacent pre- and post-intervals.
@@ -2070,7 +2070,9 @@ def calculate_auc(time, signal, intervals):
 ########################################################################################################################
 ########################################################################################################################
 
-def extract_traces_with_padding(signal, time, time_tuples, pre_window_sec, post_window_sec, FPS, align_to='onset'):
+def extract_traces_with_padding(signal: np.ndarray, time: np.ndarray, time_tuples: list, 
+                               pre_window_sec: float, post_window_sec: float, FPS: float, 
+                               align_to: str = 'onset') -> tuple:
     """
     Extract time-aligned traces around specified indices (onset or offset), with NaN padding for out-of-bounds values.
 
@@ -2151,7 +2153,7 @@ def extract_traces_with_padding(signal, time, time_tuples, pre_window_sec, post_
 ########################################################################################################################
 ########################################################################################################################
 
-def extract_data_at_timepoint(traces , time_point, sampling_rate):
+def extract_data_at_timepoint(traces: np.ndarray, time_point: float, sampling_rate: float) -> np.ndarray:
     """
     Extracts data points from a 2D numpy array at a specified time point.
     
@@ -2188,7 +2190,8 @@ def extract_data_at_timepoint(traces , time_point, sampling_rate):
 ########################################################################################################################
 ########################################################################################################################
 
-def detect_slow_peaks(signal, sampling_rate, height=1.3, min_interval=1.0, min_peak_width=0.2):
+def detect_slow_peaks(signal: np.ndarray, sampling_rate: float, height: float = 1.3, 
+                     min_interval: float = 1.0, min_peak_width: float = 0.2) -> np.ndarray:
     """
     Detects slow peaks in a signal optimized for low-frequency events.
     

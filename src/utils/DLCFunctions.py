@@ -211,7 +211,7 @@ def PostDLC_3CT_3EVTs(DLCresult:dict, destfolder:str = '', ROI:str = 'new', Nose
     y_coordinates = DLCresult[list(DLCresult.keys())[0]]['y']  # create y coordinates
 
     # Function to check if points are within each region
-    def check_point_in_regions(x, y, regions):
+    def check_point_in_regions(x: np.ndarray, y: np.ndarray, regions: list) -> list:
         points = [Point(x[i], y[i]) for i in range(len(x))]
         result = []
         for point in points:
