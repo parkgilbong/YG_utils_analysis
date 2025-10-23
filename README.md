@@ -72,6 +72,47 @@ yg-dlc2boris --config path/to/your/dlc_config.yaml
 - `yg-peak-analysis`: Detect peaks in FP signals.
 - `yg-epoch-analysis`: Run event-centered epoch analysis.
 
+## 📚 Documentation & Cheatsheets
+
+### Quick Reference Guides
+
+Get started quickly with these cheatsheets showing the most common use cases:
+
+- **[FPFunctions Cheatsheet](cheatsheet_FPFunctions.md)** - Fiber photometry data processing
+- **[PlotFunctions Cheatsheet](cheatsheet_PlotFunctions.md)** - Plotting and visualization
+- **[VideoFunctions Cheatsheet](cheatsheet_VideoFunctions.md)** - Video processing and manipulation
+- **[DLCFunctions Cheatsheet](cheatsheet_DLCFunctions.md)** - DeepLabCut tracking analysis
+- **[FileFunctions Cheatsheet](cheatsheet_FileFunctions.md)** - File operations and configuration
+
+### Complete Function Reference
+
+- **[Function Summary](utils_summary.md)** - Complete list of all functions with signatures and descriptions
+- **[Examples Notebook](examples.ipynb)** - Real-world usage examples with data
+
+### Module Organization
+
+**Utils Module** (Reusable Functions):
+- `FPFunctions.py` - Fiber photometry signal processing
+- `PlotFunctions.py` - General plotting utilities
+- `VideoFunctions.py` - Video processing and manipulation
+- `DLCFunctions.py` - DeepLabCut data processing
+- `FileFunctions.py` - File and directory operations
+- `OmicsFunctions.py` - RNA-seq and omics analysis
+- `OmicsPlotFunctions.py` - Omics visualization
+- `ReportGeneration.py` - PDF report generation
+- `config_utils.py` - Configuration management
+- `logging_utils.py` - Logging utilities
+- `boris_export.py` - BORIS format export
+
+**Analysis Module** (Analysis Pipelines):
+- `fp_preprocessing.py` - 1-channel FP preprocessing
+- `fp_preprocessing_2ch.py` - 2-channel FP preprocessing
+- `epoch_analysis.py` - Event-centered epoch analysis
+- `peak_analysis.py` - Peak detection analysis
+- `group_summary.py` - Group-level statistics
+- `DLC2BORIS.py` - DLC to BORIS conversion
+- `behavior_preprocessing.py` - Behavioral video preprocessing
+
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
