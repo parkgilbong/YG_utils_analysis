@@ -58,14 +58,14 @@ from datetime import datetime
 import pandas as pd
 import yaml
 
-from utils.DLCFunctions import (
+from fp_behav.behavior.dlc import (
     df_to_dic_single,
     get_velocity,
     get_bodypoints_distance,
     roi_entry_analysis,
 )
-from utils.boris_export import extract_bouts_from_annotation, prepare_boris_export
-from utils.FileFunctions import save_config_copy
+from fp_behav.behavior.export import extract_bouts_from_annotation, prepare_boris_export
+from fp_behav.io.files import save_config_copy
 
 
 # def log_status(message: str) -> None:

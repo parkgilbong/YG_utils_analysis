@@ -23,8 +23,9 @@ import yaml
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
-from src.utils import FPFunctions, FileFunctions
-from src.utils.FileFunctions import temp_chdir
+from fp_behav.fp import functions as FPFunctions
+from fp_behav.io import files as FileFunctions
+from fp_behav.io.files import temp_chdir
 
 # Ensure working directory is project root
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -25,9 +25,9 @@ import yaml
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import FPFunctions
-import PlotFunctions
-import FileFunctions
+from fp_behav.fp import functions as FPFunctions
+from fp_behav.plot import functions as PlotFunctions
+from fp_behav.io import files as FileFunctions
 
 
 def load_config(path: str) -> dict:

@@ -29,8 +29,8 @@ def FP_preprocessing_1ch(Tank_path:str,
     import pandas as pd
     import numpy as  np
     import pylab as plt
-    import PlotFunctions # import User-defined function 
-    import FileFunctions # import User-defined function
+    from fp_behav.plot import functions as PlotFunctions  # import User-defined function
+    from fp_behav.io import files as FileFunctions  # import User-defined function
     from scipy.signal import butter, filtfilt
     from scipy.stats import linregress
     from scipy.optimize import curve_fit
@@ -91,7 +91,7 @@ def FP_preprocessing_1ch(Tank_path:str,
             time_sec = time_seconds[ind:]
 
     elif sys == 'rwd':
-        from analysis.load_rwd_fpfile import load_fluorescence
+        from fp_behav.fp.loaders import load_fluorescence
 
         settings, FPdata = load_fluorescence(Tank_path)
 
@@ -356,8 +356,8 @@ def FP_preprocessing_2ch(Tank_path:str, Dest_folder:str, FPS: int = 25, Rec_dura
     import pandas as pd
     import numpy as  np
     import pylab as plt
-    import PlotFunctions # import User-defined function 
-    import FileFunctions # import User-defined function
+    from fp_behav.plot import functions as PlotFunctions  # import User-defined function
+    from fp_behav.io import files as FileFunctions  # import User-defined function
     from scipy.signal import butter, filtfilt
     from scipy.stats import linregress
     from scipy.optimize import curve_fit
@@ -678,8 +678,8 @@ import os
 import pandas as pd
 import numpy as np
 import pylab as plt
-import PlotFunctions
-import FileFunctions
+from fp_behav.plot import functions as PlotFunctions
+from fp_behav.io import files as FileFunctions
 from scipy.signal import butter, filtfilt
 from scipy.stats import linregress
 from scipy.optimize import curve_fit

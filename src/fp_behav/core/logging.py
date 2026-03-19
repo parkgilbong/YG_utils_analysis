@@ -99,3 +99,81 @@ def setup_named_logger(
 
     return logger, log_path
 
+
+# ---------------------------------------------------------------------------
+# Environment-aware logging (merged from logging_utils_environ.py)
+# ---------------------------------------------------------------------------
+import sys
+from typing import Tuple as _Tuple
+
+
+class StreamToLogger:
+    """
+    Redirects stream output (e.g., print() statements) to the logging module.
+    Use with a 'with' statement to capture output from a specific code block.
+    """
+    def __init__(self, logger, level=logging.INFO):
+        self.logger = logger
+        self.level = level
+        self.linebuf = ''
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.level, line.rstrip())
+
+    def flush(self):
+        pass
+
+
+def setup_logging_environ(log_dir="logs", level=logging.INFO) -> _Tuple[logging.Logger, str]:
+    """
+    Initializes the project-wide logger with pipeline/standalone mode detection.
+
+    If the 'PIPELINE_LOG_FILE' environment variable is set, attaches to that
+    log file (pipeline mode). Otherwise creates a timestamped log file in
+    log_dir (standalone mode). Idempotent: safe to call multiple times.
+
+    Args:
+        log_dir (str): Default directory for standalone log files.
+        level (int): Logging level. Defaults to logging.INFO.
+
+    Returns:
+        Tuple[logging.Logger, str]: Configured logger and path to log file.
+    """
+    import os as _os
+    logger = logging.getLogger(PROJECT_LOGGER_NAME)
+
+    if logger.handlers:
+        for handler in logger.handlers:
+            if isinstance(handler, logging.FileHandler):
+                return logger, handler.baseFilename
+        return logger, ""
+
+    logger.setLevel(level)
+    logger.propagate = False
+
+    pipeline_log_file = _os.environ.get('PIPELINE_LOG_FILE')
+
+    if pipeline_log_file:
+        log_path = pipeline_log_file
+        _os.makedirs(_os.path.dirname(log_path), exist_ok=True)
+        init_message = f"Attached to pipeline log file: {log_path}"
+    else:
+        from datetime import datetime as _dt
+        _os.makedirs(log_dir, exist_ok=True)
+        timestamp = _dt.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_path = _os.path.join(log_dir, f"standalone_run_{timestamp}.log")
+        init_message = f"No pipeline detected. Created new log file: {log_path}"
+
+    formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+
+    file_handler = logging.FileHandler(log_path, encoding='utf-8')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+
+    logger.info(init_message)
+    return logger, log_path

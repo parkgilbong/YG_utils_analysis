@@ -24,9 +24,9 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from datetime import datetime
-from src.utils.FileFunctions_new import grab_files, save_config_copy, load_config
-from src.utils.DLCFunctions import df_to_dic_multi, annotate_body_part_proximity
-from src.utils.boris_export import extract_bouts_from_annotation, prepare_boris_export
+from fp_behav.io.files import grab_files, save_config_copy, load_config
+from fp_behav.behavior.dlc import df_to_dic_multi, annotate_body_part_proximity
+from fp_behav.behavior.export import extract_bouts_from_annotation, prepare_boris_export
 
 
 

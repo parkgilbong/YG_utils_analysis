@@ -16,8 +16,8 @@ import yaml
 import logging
 from tqdm import tqdm
 from pathlib import Path
-from utils.VideoFunctions import create_video_from_images, resize_video
-from utils.FileFunctions import grab_folders, save_config_copy
+from fp_behav.video.functions import create_video_from_images, resize_video
+from fp_behav.io.files import grab_folders, save_config_copy
 
 def setup_logging():
     os.makedirs('logs', exist_ok=True)
