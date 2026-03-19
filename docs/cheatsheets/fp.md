@@ -1,15 +1,31 @@
-# FPFunctions Cheatsheet
+# FP Cheatsheet
 
-Quick reference for common Fiber Photometry data processing tasks.
+Fiber Photometry 데이터 처리 빠른 참조.
 
-## 🔥 Top 5 Most Common Use Cases
-
-### 1. Preprocess Single-Channel FP Data (TDT System)
+## 주요 임포트 경로
 
 ```python
-from utils.FPFunctions import FP_preprocessing_1ch
+from fp_behav.fp.functions import (
+    FP_preprocessing_1ch,
+    FP_preprocessing_2ch_new,
+    Peak_Analysis,
+    Epoch_Analysis_3EVT,
+    Import_manual_scoring,
+    calculate_auc,
+    extract_traces_with_padding,
+    detect_slow_peaks,
+)
+```
 
-# Basic preprocessing with exponential fit detrending
+---
+
+## Top 5 사용 사례
+
+### 1. 1채널 FP 전처리 (TDT 시스템)
+
+```python
+from fp_behav.fp.functions import FP_preprocessing_1ch
+
 FP_preprocessing_1ch(
     Tank_path='/path/to/TDT/tank',
     Dest_folder='/path/to/output',
@@ -21,16 +37,15 @@ FP_preprocessing_1ch(
 )
 ```
 
-**What it does:** Loads raw FP data, detrends using exponential fit, normalizes (dF/F), and saves processed traces.
+**결과:** 원시 FP 데이터 로드 → 지수함수 피팅 디트렌딩 → dF/F 정규화 → CSV/PNG 저장
 
 ---
 
-### 2. Preprocess Two-Channel FP Data (465nm & 560nm)
+### 2. 2채널 FP 전처리 (465nm & 560nm)
 
 ```python
-from utils.FPFunctions import FP_preprocessing_2ch_new
+from fp_behav.fp.functions import FP_preprocessing_2ch_new
 
-# Dual-channel preprocessing
 FP_preprocessing_2ch_new(
     Tank_path='/path/to/TDT/tank',
     Dest_folder='/path/to/output',
@@ -44,95 +59,89 @@ FP_preprocessing_2ch_new(
 )
 ```
 
-**What it does:** Processes both GCaMP (465nm) and control (560nm) channels simultaneously.
+**결과:** GCaMP(465nm)와 컨트롤(560nm) 채널을 동시에 처리
 
 ---
 
-### 3. Event-Centered Epoch Analysis
+### 3. Epoch 분석 (이벤트 중심)
 
 ```python
-from utils.FPFunctions import Epoch_Analysis_3EVT
+from fp_behav.fp.functions import Epoch_Analysis_3EVT
 
-# Extract signal around behavioral events
 Epoch_Analysis_3EVT(
     pkl_path='Final_table_raw_trace.pkl',
-    destfolder='/path/to/output',
-    REF_EPOC='Approach',  # Event name from manual scoring
-    Pre_samp=5.0,         # Seconds before event
-    Post_samp=10.0,       # Seconds after event
+    evt_path='Data_DLC.csv',
+    PRE_TIME=5,
+    POST_TIME=10,
     FPS=25,
-    baseline_start=-5.0,
-    baseline_end=-1.0,
+    Rec_duration=600,
     SaveData=True
 )
 ```
 
-**What it does:** Extracts signal traces aligned to specific behavioral events with baseline correction.
+**결과:** 행동 이벤트에 정렬된 신호 트레이스 추출 및 baseline 보정
 
 ---
 
-### 4. Peak Detection in FP Signals
+### 4. Peak 감지
 
 ```python
-from utils.FPFunctions import Peak_Analysis
+from fp_behav.fp.functions import Peak_Analysis
 
-# Detect calcium transients
 Peak_Analysis(
     pkl_path='Final_table_raw_trace.pkl',
-    destfolder='/path/to/output',
+    signal2use='Zscore',
+    prominence_thres=2,
+    amplitude_thres=4,
     FPS=25,
-    height=1.3,           # Z-score threshold
-    min_interval=1.0,     # Minimum time between peaks (sec)
-    min_peak_width=0.2,   # Minimum peak width (sec)
+    pre_window_len=3,
+    post_window_len=3,
     SaveData=True
 )
 ```
 
-**What it does:** Identifies significant calcium transients based on height and temporal constraints.
+**결과:** prominence/amplitude 기준으로 칼슘 transient 감지
 
 ---
 
-### 5. Import Manual Behavioral Scoring
+### 5. 수동 행동 스코어링 불러오기
 
 ```python
-from utils.FPFunctions import Import_manual_scoring
+from fp_behav.fp.functions import Import_manual_scoring
 
-# Load BORIS or similar manual scoring
 events = Import_manual_scoring(
-    file_path='/path/to/scoring.csv',
+    file_path='/path/to/scoring.tsv',
     FPS=25,
     Event='Social_Contact',
     UseFilter=True,
-    MinDuration=0.5,      # Min event duration (sec)
-    MinInterval=2.0       # Min interval between events (sec)
+    MinDuration=0.5,
+    MinInterval=2.0
 )
 ```
 
-**What it does:** Imports behavioral annotations, filters by duration/interval, returns event onset/offset times.
+**결과:** 행동 어노테이션 로드 → duration/interval 필터링 → onset/offset 시간 반환
 
 ---
 
-## 📊 Additional Useful Functions
+## 추가 함수
 
-### Calculate Area Under Curve (AUC)
+### AUC 계산
 
 ```python
-from utils.FPFunctions import calculate_auc
+from fp_behav.fp.functions import calculate_auc
 
-# Calculate AUC for specific time intervals
 auc_values = calculate_auc(
     time=time_array,
     signal=dff_trace,
-    intervals=[(10, 20), (30, 40)]  # Time intervals
+    intervals=[(10, 20), (30, 40)]
 )
 ```
 
-### Extract Traces with Padding
+### 패딩 포함 트레이스 추출
 
 ```python
-from utils.FPFunctions import extract_traces_with_padding
+from fp_behav.fp.functions import extract_traces_with_padding
 
-# Extract signal around specific timepoints
 traces = extract_traces_with_padding(
     signal=dff_trace,
     time=time_array,
@@ -144,12 +153,11 @@ traces = extract_traces_with_padding(
 )
 ```
 
-### Detect Slow Calcium Peaks
+### Slow Peak 감지
 
 ```python
-from utils.FPFunctions import detect_slow_peaks
+from fp_behav.fp.functions import detect_slow_peaks
 
-# Specialized peak detection for slow signals
 peaks = detect_slow_peaks(
     signal=dff_trace,
     sampling_rate=25,
@@ -159,25 +167,42 @@ peaks = detect_slow_peaks(
 )
 ```
 
----
+### RWD 시스템 데이터 로드
 
-## 💡 Tips & Best Practices
+```python
+from fp_behav.fp.loaders import load_fluorescence
 
-1. **Always check your sampling rate**: FP systems typically record at 1017 Hz, but behavioral alignment uses camera FPS (usually 25 Hz).
-
-2. **Detrending method choice**:
-   - `'Exp_fit'`: Best for signals with exponential decay (most common)
-   - `'Highpass_filter'`: For signals with linear drift
-
-3. **Baseline correction**: For epoch analysis, use -5 to -1 seconds before event as baseline for stable dF/F calculation.
-
-4. **Save intermediate files**: Use `SaveAsCSV=True` to keep intermediate processing steps for QC.
-
-5. **Event filtering**: When importing manual scoring, filter out very brief events (< 0.5s) to avoid noise.
+settings, df = load_fluorescence('/path/to/Fluorescence.csv')
+```
 
 ---
 
-## 🔗 Related
+## 파이프라인 실행
 
-- See [PlotFunctions Cheatsheet](cheatsheet_PlotFunctions.md) for visualization
-- See [FileFunctions Cheatsheet](cheatsheet_FileFunctions.md) for file operations
+```bash
+# CLI
+fp-preprocess     --config configs/fp_1ch.yaml
+fp-preprocess-2ch --config configs/fp_2ch.yaml
+fp-epoch          --config configs/epoch.yaml
+fp-peak           --config configs/peak.yaml
+
+# Snakemake
+snakemake --configfile configs/fp_1ch.yaml -j 4
+```
+
+---
+
+## Tips
+
+1. **샘플링 레이트**: TDT 시스템은 ~1017 Hz로 기록하지만, 행동 정렬은 카메라 FPS(25 Hz) 사용
+2. **디트렌딩 선택**: `'Exp_fit'` - 지수적 감쇠(일반적), `'Highpass_filter'` - 선형 드리프트
+3. **Baseline 보정**: 이벤트 전 -5 ~ -1초 구간 사용 권장
+4. **중간 파일 저장**: `SaveAsCSV=True` 로 QC용 중간 파일 보존
+
+---
+
+## 관련 문서
+
+- [Plot Cheatsheet](plot.md)
+- [Files Cheatsheet](files.md)
+- [DLC Cheatsheet](dlc.md)

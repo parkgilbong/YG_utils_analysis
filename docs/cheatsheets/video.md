@@ -1,41 +1,54 @@
-# VideoFunctions Cheatsheet
+# Video Cheatsheet
 
-Quick reference for common video processing and manipulation tasks.
+영상 처리 및 조작 빠른 참조.
 
-## 🎬 Top 5 Most Common Use Cases
-
-### 1. Extract Specific Frames from Video
+## 주요 임포트 경로
 
 ```python
-from utils.VideoFunctions import extract_frames
-
-# Extract frames at specific indices
-video_path = '/path/to/video.mp4'
-frame_indices = [100, 500, 1000, 1500, 2000]
-output_folder = '/path/to/output/frames'
-
-extract_frames(
-    video_path=video_path,
-    frame_indices=frame_indices,
-    output_folder=output_folder
+from fp_behav.video.functions import (
+    extract_frames,
+    extract_video_slices,
+    flip_video,
+    resize_video,
+    add_inset_chart,
+    create_video_from_images,
+    VideoChopper,
+    Generate_montage,
+    extract_first_frame_and_draw_rois,
+    create_animated_chart,
 )
-# Output: frame_100.png, frame_500.png, etc.
 ```
-
-**What it does:** Extracts and saves specific frames as PNG images for figure preparation or QC.
 
 ---
 
-### 2. Extract Video Slices/Segments
+## Top 5 사용 사례
+
+### 1. 특정 프레임 추출
 
 ```python
-from utils.VideoFunctions import extract_video_slices
+from fp_behav.video.functions import extract_frames
+
+extract_frames(
+    video_path='/path/to/video.mp4',
+    frame_indices=[100, 500, 1000, 1500, 2000],
+    output_folder='/path/to/output/frames'
+)
+# 출력: frame_100.png, frame_500.png, ...
+```
+
+**결과:** 지정 프레임을 PNG로 저장 (논문 figure 준비, QC용)
+
+---
+
+### 2. 비디오 구간 추출
+
+```python
+from fp_behav.video.functions import extract_video_slices
 import pandas as pd
 
-# Define time segments to extract
 slices_df = pd.DataFrame({
-    'start_frame': [250, 1000, 2500],  # Start frames
-    'end_frame':   [500, 1250, 2750]   # End frames
+    'start_frame': [250, 1000, 2500],
+    'end_frame':   [500, 1250, 2750]
 })
 
 extract_video_slices(
@@ -43,124 +56,107 @@ extract_video_slices(
     slices_df=slices_df,
     output_folder='/path/to/output/slices'
 )
-# Output: slice_0.avi, slice_1.avi, slice_2.avi
+# 출력: slice_0.avi, slice_1.avi, slice_2.avi
 ```
 
-**What it does:** Extracts specific time segments as separate video files, useful for highlighting behaviors.
+**결과:** 특정 시간 구간을 별도 비디오 파일로 추출
 
 ---
 
-### 3. Flip/Mirror Videos
+### 3. 비디오 플립 (좌우/상하 반전)
 
 ```python
-from utils.VideoFunctions import flip_video
+from fp_behav.video.functions import flip_video
 
-# Horizontally flip video (mirror)
 flip_video(
     input_path='/path/to/input_video.mp4',
     output_path='/path/to/flipped_video.mp4'
 )
 ```
 
-**What it does:** Horizontally flips videos, useful for standardizing camera orientation.
+**결과:** 카메라 방향 표준화를 위한 비디오 수직 반전
 
 ---
 
-### 4. Resize Videos
+### 4. 비디오 리사이징
 
 ```python
-from utils.VideoFunctions import resize_video
+from fp_behav.video.functions import resize_video
 
-# Reduce video size by 50%
+# 50% 축소
 resize_video(
     input_path='/path/to/large_video.mp4',
     output_path='/path/to/small_video.mp4',
-    scale_factor=0.5  # 0.5 = 50% of original size
-)
-
-# Enlarge video
-resize_video(
-    input_path='/path/to/small_video.mp4',
-    output_path='/path/to/large_video.mp4',
-    scale_factor=2.0  # 2x larger
+    scale_factor=0.5
 )
 ```
 
-**What it does:** Resizes videos to reduce file size or prepare for presentations.
+**결과:** 파일 크기 축소 또는 발표용 해상도 조정
 
 ---
 
-### 5. Add FP Signal Chart Overlay to Video
+### 5. FP 신호 차트 오버레이
 
 ```python
-from utils.VideoFunctions import add_inset_chart
+from fp_behav.video.functions import add_inset_chart
 
-# Overlay calcium signal plot on video
 add_inset_chart(
     video_slice_path='/path/to/behavior_video.avi',
     chart_path='/path/to/calcium_trace.png',
     filename='behavior_with_calcium',
-    position=('right', 'bottom'),  # Chart position
-    chart_width=480  # Width of chart in pixels
+    position=('right', 'bottom'),
+    chart_width=480
 )
 ```
 
-**What it does:** Creates a composite video with behavioral footage and synchronized FP signal.
+**결과:** 행동 영상 위에 FP 신호 플롯을 합성한 복합 비디오 생성
 
 ---
 
-## 🎨 Advanced Video Processing
+## 고급 비디오 처리
 
-### Create Video Montage (Grid Layout)
+### 몽타주 생성 (격자 레이아웃)
 
 ```python
-from utils.VideoFunctions import Generate_montage
+from fp_behav.video.functions import Generate_montage
 
-# Create 3x3 grid of videos
 Generate_montage(
     input_folder='/path/to/videos',
     output_filename='montage_3x3.mp4',
     rows=3,
     cols=3,
     frame_rate=25,
-    duration=600,  # seconds
-    codec='mp4v',
+    duration=600,
     titles=['Mouse 1', 'Mouse 2', 'Mouse 3',
             'Mouse 4', 'Mouse 5', 'Mouse 6',
             'Mouse 7', 'Mouse 8', 'Mouse 9'],
-    scale_factor=0.3  # Scale each video to 30%
+    scale_factor=0.3
 )
 ```
 
-**What it does:** Combines multiple videos into a grid layout for simultaneous viewing.
-
 ---
 
-### Chop Video into Chunks
+### 비디오 청크 분할
 
 ```python
-from utils.VideoFunctions import VideoChopper
+from fp_behav.video.functions import VideoChopper
 
-# Split long video into 60-second chunks
 VideoChopper(
     input_file='/path/to/long_video.mp4',
-    chunk_duration=60,  # seconds per chunk
-    tags=['exp1', 'trial1'],  # Tags for filename
+    chunk_duration=60,
+    tags=['exp1', 'trial1'],
     startingIdx=0
 )
-# Output: exp1_trial1_000.mp4, exp1_trial1_001.mp4, etc.
+# 출력: exp1_trial1_000.mp4, exp1_trial1_001.mp4, ...
 ```
-
-**What it does:** Splits long recordings into manageable chunks.
 
 ---
 
-### Create Video from Image Sequence
+### 이미지 시퀀스로 비디오 생성
 
 ```python
-from utils.VideoFunctions import create_video_from_images
+from fp_behav.video.functions import create_video_from_images
 
-# Combine frames into video
 create_video_from_images(
     image_folder='/path/to/frames',
     output_filename='reconstructed_video.mp4',
@@ -171,16 +167,13 @@ create_video_from_images(
 )
 ```
 
-**What it does:** Assembles individual frames into a video file.
-
 ---
 
-### Draw ROIs on First Frame
+### ROI를 첫 프레임에 그리기
 
 ```python
-from utils.VideoFunctions import extract_first_frame_and_draw_rois
+from fp_behav.video.functions import extract_first_frame_and_draw_rois
 
-# Define regions of interest
 rois = [
     [(100, 100), (300, 100), (300, 300), (100, 300)],  # Social zone
     [(400, 400), (600, 400), (600, 600), (400, 600)]   # Object zone
@@ -193,65 +186,27 @@ extract_first_frame_and_draw_rois(
 )
 ```
 
-**What it does:** Creates arena diagram with ROIs marked for methods figures.
-
 ---
 
-### Create Animated Chart
+### Snakemake에서 비디오 처리
 
-```python
-from utils.VideoFunctions import create_animated_chart
-
-# Create animated plot that syncs with video
-data = [
-    {'time': 0.0, 'signal': 0.5, 'baseline': 0.0},
-    {'time': 0.04, 'signal': 0.6, 'baseline': 0.0},
-    # ... more data points
-]
-
-create_animated_chart(
-    data=data,
-    filename='animated_trace.mp4',
-    interval=40,  # ms between frames (25 FPS = 40 ms)
-    offset=0.0
-)
+```bash
+# video.smk 규칙 실행
+snakemake --configfile configs/behavior.yaml results/mouse001/session01/behavior/video_flipped.avi -j 1
 ```
 
-**What it does:** Creates an animated line plot that can be synced with behavioral video.
+---
+
+## Tips
+
+1. **비디오 포맷**: 입력 `.mp4` / `.avi` 모두 지원, 출력은 공유용 `.mp4`, 후처리용 `.avi`
+2. **코덱 선택**: `'mp4v'` - 범용 호환, `'XVID'` - 고품질, `'H264'` - 최고 압축
+3. **리사이징**: scale_factor 0.5 = 50% 크기 = 파일 크기 약 1/4
+4. **차트 오버레이**: 차트 너비는 비디오 너비의 1/3 이하 권장
 
 ---
 
-## 💡 Tips & Best Practices
+## 관련 문서
 
-1. **Video formats**:
-   - Input: `.mp4`, `.avi` both supported
-   - Output: Use `.mp4` for sharing, `.avi` for further processing
-
-2. **Codec choices**:
-   - `'mp4v'`: Good compression, widely compatible
-   - `'XVID'`: Better quality, larger files
-   - `'H264'`: Best compression (may need extra codecs)
-
-3. **Frame extraction**:
-   - Extract frames at key timepoints for figure panels
-   - Use 300 DPI PNG for publication quality
-
-4. **Resizing**:
-   - Scale factor 0.5 = 50% size, 1/4 file size
-   - Always resize before uploading/sharing
-
-5. **Chart overlays**:
-   - Position: `('right', 'bottom')` usually works best
-   - Keep chart width ≤ 1/3 of video width
-   - Ensure time synchronization between video and chart
-
-6. **Processing large files**:
-   - Process in chunks for very long videos (>1 hour)
-   - Free disk space should be 3x video size
-
----
-
-## 🔗 Related
-
-- See [DLCFunctions Cheatsheet](cheatsheet_DLCFunctions.md) for tracking analysis
-- See [FPFunctions Cheatsheet](cheatsheet_FPFunctions.md) for signal analysis
+- [DLC Cheatsheet](dlc.md)
+- [FP Cheatsheet](fp.md)

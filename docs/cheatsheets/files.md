@@ -1,84 +1,97 @@
-# FileFunctions Cheatsheet
+# Files Cheatsheet
 
-Quick reference for file operations, configuration management, and directory utilities.
+파일 I/O, 설정 관리, 디렉토리 유틸리티 빠른 참조.
 
-## 📁 Top 5 Most Common Use Cases
-
-### 1. Set Working Directory with Auto-Creation
+## 주요 임포트 경로
 
 ```python
-from utils.FileFunctions import set_working_directory
+from fp_behav.io.files import (
+    set_working_directory,
+    grab_files,
+    grab_folders,
+    get_dirname_and_basename,
+    load_dataframes,
+    load_config,
+    save_config_copy,
+    temp_chdir,
+    ensure_dir,
+    load_yaml,
+)
 
-# Create nested directory structure and set as working dir
+from fp_behav.core.config import (
+    get_cfg,
+    deep_merge,
+    pick,
+    resolve_path,
+)
+
+from fp_behav.core.logging import (
+    setup_logging,
+    setup_named_logger,
+)
+```
+
+---
+
+## Top 5 사용 사례
+
+### 1. 작업 디렉토리 자동 생성 및 이동
+
+```python
+from fp_behav.io.files import set_working_directory
+
 output_path = set_working_directory(
-    base_folder='/path/to/project',
+    '/path/to/project',
     'results',
     'experiment_2024',
     'group_A'
 )
-# Creates: /path/to/project/results/experiment_2024/group_A
-# Sets it as current working directory
-print(f"Now working in: {output_path}")
+# /path/to/project/results/experiment_2024/group_A 생성 후 이동
 ```
 
-**What it does:** Creates nested directories if they don't exist and changes to that directory.
+**결과:** 중첩 디렉토리 생성 및 현재 작업 디렉토리 변경
 
 ---
 
-### 2. Find All Files with Specific Extension
+### 2. 특정 확장자 파일 검색
 
 ```python
-from utils.FileFunctions import grab_files
+from fp_behav.io.files import grab_files
 
-# Find all CSV files in a directory
-csv_files = grab_files(
-    folder_path='/path/to/data',
-    ext='.csv',
-    recursive=False  # Only current directory
-)
+# CSV 파일만 찾기
+csv_files = grab_files('/path/to/data', ext='.csv', recursive=False)
 
-# Find all pickle files recursively
-pkl_files = grab_files(
-    folder_path='/path/to/data',
-    ext='.pkl',
-    recursive=True  # Include subdirectories
-)
+# 하위 폴더 포함 PKL 파일 검색
+pkl_files = grab_files('/path/to/data', ext='.pkl', recursive=True)
 
-print(f"Found {len(csv_files)} CSV files")
-for file in csv_files:
-    print(file)
+print(f"Found {len(pkl_files)} pkl files")
 ```
 
-**What it does:** Retrieves all files with a specific extension, optionally searching subdirectories.
+**결과:** 지정 확장자의 파일 경로 목록 반환
 
 ---
 
-### 3. Load Configuration from YAML
+### 3. YAML 설정 파일 로드
 
 ```python
-from utils.FileFunctions import load_config
+from fp_behav.io.files import load_config
 
-# Load analysis parameters from YAML
-config = load_config('/path/to/config.yaml')
+config = load_config('configs/fp_1ch.yaml')
 
-# Access configuration values
-tank_path = config['tank_path']
+tank_path = config['raw_data_path']
 fps = config['fps']
 rec_duration = config['rec_duration']
-
-print(f"FPS: {fps}, Duration: {rec_duration}s")
 ```
 
-**What it does:** Loads YAML configuration files into Python dictionaries.
+**결과:** YAML 설정 파일을 Python 딕셔너리로 로드
 
 ---
 
-### 4. Load Multiple Data Files
+### 4. 여러 데이터 파일 일괄 로드
 
 ```python
-from utils.FileFunctions import load_dataframes
+from fp_behav.io.files import load_dataframes
 
-# Load multiple pickle files at once
 file_list = [
     '/path/to/mouse1_data.pkl',
     '/path/to/mouse2_data.pkl',
@@ -88,244 +101,161 @@ file_list = [
 traces, time_vector, labels = load_dataframes(
     file_list=file_list,
     file_type='pickle',
-    trace_start_idx=1  # Column 0 is time, traces start at column 1
+    trace_start_idx=1
 )
 
-# traces: combined array of all traces
-# time_vector: shared time axis
-# labels: labels for each trace
 print(f"Loaded {traces.shape[0]} traces")
 ```
 
-**What it does:** Batch loads multiple data files and combines them for group analysis.
+**결과:** 여러 파일 일괄 로드 및 그룹 분석용 배열로 결합
 
 ---
 
-### 5. Temporary Directory Change
+### 5. 임시 디렉토리 변경 (컨텍스트 매니저)
 
 ```python
-from utils.FileFunctions import temp_chdir
+from fp_behav.io.files import temp_chdir
 
-# Temporarily work in a different directory
 with temp_chdir('/path/to/temporary/location'):
-    # All file operations here use the temporary directory
+    # 이 블록 안에서만 해당 디렉토리 사용
     with open('temp_file.txt', 'w') as f:
         f.write('Temporary data')
-    
-    # Process files in this directory
-    process_data()
 
-# Automatically returns to original directory
-print("Back to original directory")
+# 자동으로 원래 디렉토리로 복귀
 ```
 
-**What it does:** Context manager for temporarily changing directories safely.
+**결과:** 안전하게 디렉토리를 임시 변경하는 컨텍스트 매니저
 
 ---
 
-## 🔧 Advanced File Operations
+## 추가 파일 유틸리티
 
-### Get Folder List
+### 폴더 목록 가져오기
 
 ```python
-from utils.FileFunctions import grab_folders
+from fp_behav.io.files import grab_folders
 
-# Get all subdirectories (full paths)
-folders = grab_folders(
-    folder_path='/path/to/data',
-    recursive=False,
-    names_only=False
-)
+# 전체 경로
+folders = grab_folders('/path/to/data', recursive=False, names_only=False)
 
-# Get only folder names (not full paths)
-folder_names = grab_folders(
-    folder_path='/path/to/data',
-    recursive=False,
-    names_only=True
-)
-
-# Recursively find all subdirectories
-all_folders = grab_folders(
-    folder_path='/path/to/data',
-    recursive=True,
-    names_only=False
-)
+# 폴더 이름만
+folder_names = grab_folders('/path/to/data', recursive=False, names_only=True)
 ```
 
 ---
 
-### Extract Parent and Filename
+### 파일 경로에서 부모 폴더/파일명 추출
 
 ```python
-from utils.FileFunctions import get_dirname_and_basename
+from fp_behav.io.files import get_dirname_and_basename
 
-# Parse file path
-file_path = '/experiments/group_A/mouse_001/data.pkl'
-path_info = get_dirname_and_basename(file_path)
-
-print(f"Parent folder: {path_info.parent}")  # group_A
-print(f"File name: {path_info.stem}")  # data
+path_info = get_dirname_and_basename('/experiments/group_A/mouse_001/data.pkl')
+print(f"Parent: {path_info.parent}")  # group_A
+print(f"Stem: {path_info.stem}")      # data
 ```
-
-**What it does:** Extracts parent directory name and file basename (without extension).
 
 ---
 
-### Ensure Directory Exists
+### 디렉토리 존재 보장
 
 ```python
-from utils.FileFunctions import ensure_dir
+from fp_behav.io.files import ensure_dir
 
-# Create directory if it doesn't exist (no error if exists)
 output_dir = ensure_dir('/path/to/output/directory')
-
-# Now safe to save files
-import pandas as pd
-df = pd.DataFrame({'data': [1, 2, 3]})
-df.to_csv(f"{output_dir}/results.csv")
+# 없으면 생성, 있으면 그냥 경로 반환
 ```
 
 ---
 
-### Save Config Copy with Results
+### 설정 파일 사본 저장 (재현성)
 
 ```python
-from utils.FileFunctions import save_config_copy, load_config
+from fp_behav.io.files import save_config_copy, load_config
 from pathlib import Path
 
-# Load config
-config = load_config('config.yaml')
+config = load_config('configs/fp_1ch.yaml')
 
-# Run analysis
-# ... your analysis code ...
-
-# Save copy of config used
+# 분석 실행 후 사용한 설정 보관
 output_dir = Path('/path/to/results')
 save_config_copy(config, output_dir)
-# Creates: /path/to/results/config_used.yaml
-```
-
-**What it does:** Archives the exact configuration used for reproducibility.
-
----
-
-### Load YAML Safely
-
-```python
-from utils.FileFunctions import load_yaml
-
-# Load YAML with error handling
-try:
-    data = load_yaml('/path/to/config.yaml')
-except FileNotFoundError:
-    print("Config file not found")
-except Exception as e:
-    print(f"Error loading YAML: {e}")
+# 저장: /path/to/results/config_used.yaml
 ```
 
 ---
 
-## 💡 Tips & Best Practices
+## 설정 관리 (core.config)
 
-1. **Directory organization**:
-   ```
-   project/
-   ├── raw_data/
-   ├── processed/
-   │   ├── preprocessing/
-   │   └── analysis/
-   ├── figures/
-   └── configs/
-   ```
+```python
+from fp_behav.core.config import get_cfg, deep_merge, pick
 
-2. **Configuration files**:
-   - Use YAML for all analysis parameters
-   - Version control your configs
-   - Save a copy with each analysis output
+# YAML 로드
+cfg = get_cfg('configs/fp_1ch.yaml')
 
-3. **File naming conventions**:
-   ```python
-   # Good naming
-   mouse001_session01_20240115.pkl
-   group_control_summary.csv
-   
-   # Avoid
-   data.pkl
-   results_final_final2.csv
-   ```
+# 두 설정 딕셔너리 병합 (update가 base를 덮어씀)
+merged = deep_merge(base_cfg, user_cfg)
 
-4. **Batch processing**:
-   ```python
-   # Process all files in a folder
-   files = grab_files('/data', ext='.csv', recursive=True)
-   for file in files:
-       process_file(file)
-   ```
-
-5. **Path handling**:
-   ```python
-   from pathlib import Path
-   
-   # Use pathlib for cross-platform compatibility
-   base = Path('/project/data')
-   file_path = base / 'subdir' / 'file.csv'
-   ```
-
-6. **Error handling**:
-   ```python
-   from utils.FileFunctions import grab_files
-   
-   try:
-       files = grab_files('/path/to/data', ext='.pkl')
-       if not files:
-           print("No files found!")
-   except ValueError as e:
-       print(f"Invalid path: {e}")
-   ```
+# CLI 인수 우선, 없으면 cfg 값, 둘 다 없으면 기본값
+fps = pick(cli_fps, cfg, 'fps', default=25)
+```
 
 ---
 
-## 📋 Common Workflow Pattern
+## 로깅 설정 (core.logging)
 
 ```python
-from utils.FileFunctions import (
-    load_config,
-    set_working_directory,
-    grab_files,
-    save_config_copy
-)
+from fp_behav.core.logging import setup_logging, setup_named_logger
+
+# 기본 로거 설정
+logger, log_path = setup_logging(log_dir='logs', level=logging.INFO)
+
+# 이름 있는 로거 (타임스탬프 파일에 저장)
+logger, log_path = setup_named_logger('fp_preprocess', log_dir='logs')
+
+logger.info("Processing started")
+logger.error("Something went wrong")
+```
+
+---
+
+## 전형적인 워크플로우 패턴
+
+```python
+from fp_behav.io.files import load_config, set_working_directory, grab_files, save_config_copy
+from fp_behav.core.logging import setup_logging
 from pathlib import Path
 
-# 1. Load configuration
-config = load_config('config.yaml')
+# 1. 설정 로드
+config = load_config('configs/fp_1ch.yaml')
 
-# 2. Set up output directory
-output_dir = set_working_directory(
-    config['base_path'],
-    'results',
-    config['experiment_id']
-)
+# 2. 로깅 설정
+setup_logging(log_dir='logs')
 
-# 3. Save config copy
+# 3. 출력 디렉토리 생성
+output_dir = set_working_directory(config['base_folder'], config['batch_folder'])
+
+# 4. 설정 사본 저장
 save_config_copy(config, Path(output_dir))
 
-# 4. Find input files
-input_files = grab_files(
-    config['data_path'],
-    ext='.pkl',
-    recursive=True
-)
+# 5. 입력 파일 검색
+input_files = grab_files(config['raw_data_path'], ext='.pkl', recursive=True)
 
-# 5. Process files
+# 6. 파일 처리
 for file in input_files:
     process_file(file, config)
-
-print(f"Analysis complete. Results in: {output_dir}")
 ```
 
 ---
 
-## 🔗 Related
+## Tips
 
-- See [config_utils](cheatsheet_config_utils.md) for advanced configuration management
-- See other cheatsheets for domain-specific file operations
+1. **설정 파일 버전 관리**: YAML 파일을 git에 포함하고, 분석마다 `save_config_copy`로 사본 저장
+2. **파일 명명 규칙**: `mouse001_session01_20240115.pkl` 처럼 날짜 포함
+3. **배치 처리**: `grab_files + recursive=True`로 하위 폴더 전체 처리
+4. **경로**: `pathlib.Path`로 크로스플랫폼 호환 경로 사용
+
+---
+
+## 관련 문서
+
+- [FP Cheatsheet](fp.md)
+- [DLC Cheatsheet](dlc.md)

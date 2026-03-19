@@ -1,16 +1,29 @@
-# PlotFunctions Cheatsheet
+# Plot Cheatsheet
 
-Quick reference for common plotting and visualization tasks.
+시각화 빠른 참조.
 
-## 🎨 Top 5 Most Common Use Cases
-
-### 1. Plot Single Time Series
+## 주요 임포트 경로
 
 ```python
-from utils.PlotFunctions import plot_single_line
+from fp_behav.plot.functions import (
+    plot_single_line,
+    plot_dual_line,
+    plot_traces_with_mean,
+    plot_trace_heatmap,
+    plot_multi_line,
+)
+```
+
+---
+
+## Top 5 사용 사례
+
+### 1. 단일 시계열 플롯
+
+```python
+from fp_behav.plot.functions import plot_single_line
 import numpy as np
 
-# Simple line plot
 time = np.linspace(0, 10, 1000)
 signal = np.sin(time)
 
@@ -28,16 +41,15 @@ plot_single_line(
 )
 ```
 
-**What it does:** Creates a clean, publication-ready single line plot with customizable axes and labels.
+**결과:** 커스터마이즈 가능한 논문용 단일 라인 플롯
 
 ---
 
-### 2. Plot Dual Signals with Two Y-Axes
+### 2. 두 신호 이중 Y축 플롯
 
 ```python
-from utils.PlotFunctions import plot_dual_line
+from fp_behav.plot.functions import plot_dual_line
 
-# Overlay two signals with different scales
 plot_dual_line(
     x1=time, y1=calcium_signal,
     x2=time, y2=behavior_score,
@@ -55,17 +67,16 @@ plot_dual_line(
 )
 ```
 
-**What it does:** Overlays two time series with independent y-axes, perfect for FP + behavior.
+**결과:** 독립 Y축을 가진 두 시계열 오버레이 (FP + 행동 동시 표시에 유용)
 
 ---
 
-### 3. Plot Multiple Traces with Mean ± SEM
+### 3. 평균 ± SEM 트레이스 플롯
 
 ```python
-from utils.PlotFunctions import plot_traces_with_mean
+from fp_behav.plot.functions import plot_traces_with_mean
 import matplotlib.pyplot as plt
 
-# Plot event-aligned traces from multiple trials
 fig, ax = plt.subplots(figsize=(10, 6))
 
 plot_traces_with_mean(
@@ -76,31 +87,29 @@ plot_traces_with_mean(
     title='Peri-Event Traces',
     xlabel='Time from Event (s)',
     ylabel='dF/F (z-score)',
-    mode='sem'  # Use 'std' for standard deviation
+    mode='sem'  # 'std' 도 가능
 )
 
 plt.axvline(0, color='red', linestyle='--', label='Event Onset')
 plt.legend()
 plt.tight_layout()
 plt.savefig('epoch_analysis.png', dpi=300)
-plt.show()
 ```
 
-**What it does:** Visualizes multiple trials with mean and shaded error region (SEM or SD).
+**결과:** 평균 ± 음영 오차 영역(SEM/SD)으로 여러 트라이얼 시각화
 
 ---
 
-### 4. Create Heatmap of Trial-by-Trial Activity
+### 4. 트라이얼별 히트맵
 
 ```python
-from utils.PlotFunctions import plot_trace_heatmap
+from fp_behav.plot.functions import plot_trace_heatmap
 import matplotlib.pyplot as plt
 
-# Heatmap showing all trials
 fig, ax = plt.subplots(figsize=(10, 8))
 
 plot_trace_heatmap(
-    traces=epoch_traces,  # Shape: (n_trials, n_timepoints)
+    traces=epoch_traces,
     trace_time=time_vector,
     vmin=-2,
     vmax=3,
@@ -114,19 +123,17 @@ plot_trace_heatmap(
 plt.axvline(0, color='white', linestyle='--', linewidth=2)
 plt.tight_layout()
 plt.savefig('heatmap.png', dpi=300)
-plt.show()
 ```
 
-**What it does:** Creates a heatmap showing individual trial responses over time.
+**결과:** 개별 트라이얼 반응을 시간에 따라 히트맵으로 표시
 
 ---
 
-### 5. Plot Multiple Groups for Comparison
+### 5. 멀티 그룹 비교
 
 ```python
-from utils.PlotFunctions import plot_multi_line
+from fp_behav.plot.functions import plot_multi_line
 
-# Compare different experimental groups
 xy_pairs = [
     (time, control_mean, 'Control'),
     (time, drug_mean, 'Drug'),
@@ -151,24 +158,24 @@ plot_multi_line(
 )
 ```
 
-**What it does:** Overlays multiple group averages with error bands for comparison.
+**결과:** 오차 밴드를 포함한 여러 그룹 평균 오버레이
 
 ---
 
-## 🎯 Advanced Plotting Scenarios
+## 고급 플로팅
 
-### Create Multi-Panel Figure
+### 멀티 패널 피규어
 
 ```python
 import matplotlib.pyplot as plt
-from utils.PlotFunctions import plot_single_line, plot_traces_with_mean
+from fp_behav.plot.functions import plot_single_line, plot_traces_with_mean, plot_trace_heatmap
 
 fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
 # Panel A: Raw trace
 plot_single_line(
     x=time, y=raw_trace,
-    fig_size=None,  # Don't create new figure
+    fig_size=None,
     fig_title='A. Raw Signal',
     x_label='Time (s)', y_label='Fluorescence',
     x_lim=(0, 100), y_lim=None,
@@ -176,7 +183,7 @@ plot_single_line(
     ax=axes[0, 0]
 )
 
-# Panel B: Processed trace
+# Panel B: dF/F trace
 plot_single_line(
     x=time, y=dff_trace,
     fig_size=None,
@@ -187,7 +194,7 @@ plot_single_line(
     ax=axes[0, 1]
 )
 
-# Panel C: Epoch averages
+# Panel C: Epoch average
 plot_traces_with_mean(
     trace_array=epoch_traces,
     trace_time=epoch_time,
@@ -197,7 +204,6 @@ plot_traces_with_mean(
 )
 
 # Panel D: Heatmap
-from utils.PlotFunctions import plot_trace_heatmap
 plot_trace_heatmap(
     traces=epoch_traces,
     trace_time=epoch_time,
@@ -207,32 +213,21 @@ plot_trace_heatmap(
 
 plt.tight_layout()
 plt.savefig('figure_panel.png', dpi=300)
-plt.show()
 ```
 
 ---
 
-## 💡 Tips & Best Practices
+## Tips
 
-1. **Figure sizes**: Use (12, 4) for time series, (10, 6) for comparisons, (10, 8) for heatmaps.
-
-2. **Color choices**:
-   - Green/teal: Calcium signals (GCaMP)
-   - Blue: Control or isosbestic
-   - Red/orange: Events or secondary signals
-   - Gray: Control groups
-
-3. **DPI settings**: Use 300 DPI for publications, 150 for presentations, 72 for quick checks.
-
-4. **Axis limits**: Let matplotlib auto-scale first, then adjust if needed for clarity.
-
-5. **Event markers**: Always mark important events (t=0, stimulation) with vertical lines.
-
-6. **Error bands**: Use SEM for group comparisons, STD for individual variability.
+1. **Figure 크기**: 시계열 (12, 4), 비교 (10, 6), 히트맵 (10, 8)
+2. **색상 선택**: 초록/청록 = 칼슘신호(GCaMP), 파랑 = 대조, 빨강/주황 = 이벤트, 회색 = 대조군
+3. **DPI**: 논문 300, 발표 150, 빠른 확인 72
+4. **이벤트 마커**: 중요 시점(t=0, 자극)은 항상 수직선으로 표시
+5. **오차 밴드**: 그룹 비교에는 SEM, 개별 변동성에는 STD
 
 ---
 
-## 🔗 Related
+## 관련 문서
 
-- See [FPFunctions Cheatsheet](cheatsheet_FPFunctions.md) for data processing
-- See [VideoFunctions Cheatsheet](cheatsheet_VideoFunctions.md) for video visualization
+- [FP Cheatsheet](fp.md)
+- [Video Cheatsheet](video.md)
