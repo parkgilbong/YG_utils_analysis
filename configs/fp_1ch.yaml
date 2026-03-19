@@ -1,0 +1,21 @@
+# fp_behav: 1-channel FP preprocessing config
+# Usage: fp-preprocess --config configs/fp_1ch.yaml
+#        snakemake --configfile configs/fp_1ch.yaml -j 4
+
+raw_data_path: "/data/raw"
+recorded_date: "20250101"
+base_folder: "/data/processed"
+batch_folder: "batch_01"
+
+sys: "tdt"                    # "tdt" or "rwd"
+detrending_method: "Highpass_filter"  # "Exp_fit" or "Highpass_filter"
+use_camtick: true
+duration_mode: "fixed"
+fps: 25
+rec_duration: 600
+save_as_csv: true
+
+# Optional: override auto-detected lists
+# animal_id_list: ["A001", "A002"]
+# session_list: ["EE", "SE"]
+# datafolder_list: ["A001_EE", "A001_SE"]

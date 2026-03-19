@@ -1,0 +1,16 @@
+"""
+fp_behav Snakemake Pipeline
+Usage: snakemake --configfile configs/fp_1ch.yaml -j 4
+"""
+configfile: "configs/fp_1ch.yaml"
+
+include: "rules/fp.smk"
+include: "rules/behavior.smk"
+include: "rules/video.smk"
+
+
+rule all:
+    input:
+        expand("results/{animal}/{session}/Preprocessing/done.flag",
+               animal=config["animal_id_list"],
+               session=config["session_list"]),

@@ -1,0 +1,22 @@
+name: fp_behav
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+    - fp_behav
+    - snakemake
+    - pandas
+    - numpy
+    - scipy
+    - matplotlib
+    - seaborn
+    - opencv-python
+    - PyYAML
+    - tqdm
+    - shapely
+    - reportlab
+    - moviepy
+    - Pillow
