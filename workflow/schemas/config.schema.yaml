@@ -1,0 +1,43 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+description: "fp_behav pipeline configuration schema"
+type: object
+required:
+  - raw_data_path
+  - recorded_date
+  - base_folder
+  - batch_folder
+properties:
+  raw_data_path:
+    type: string
+    description: "Root path to raw data"
+  recorded_date:
+    type: string
+    description: "Recording date (YYYYMMDD)"
+  base_folder:
+    type: string
+    description: "Base output folder"
+  batch_folder:
+    type: string
+    description: "Batch subfolder name"
+  sys:
+    type: string
+    enum: ["tdt", "rwd"]
+    default: "tdt"
+  detrending_method:
+    type: string
+    enum: ["Exp_fit", "Highpass_filter"]
+    default: "Highpass_filter"
+  fps:
+    type: integer
+    default: 25
+  rec_duration:
+    type: integer
+    default: 600
+  animal_id_list:
+    type: array
+    items:
+      type: string
+  session_list:
+    type: array
+    items:
+      type: string

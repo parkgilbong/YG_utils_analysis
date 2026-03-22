@@ -1,0 +1,15 @@
+# fp_behav: 2-channel FP preprocessing config
+raw_data_path: "/data/raw"
+recorded_date: "20250101"
+base_folder: "/data/processed"
+batch_folder: "batch_01"
+
+sys: "tdt"
+detrending_method: "Highpass_filter"
+use_camtick: true
+duration_mode: "fixed"
+fps: 25
+rec_duration: 600
+save_as_csv: true
+channel_465: "465"
+channel_560: "560"

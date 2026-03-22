@@ -1,0 +1,14 @@
+# fp_behav: Behavior preprocessing config
+raw_video_path: "/data/raw/videos"
+base_folder: "/data/processed"
+batch_folder: "batch_01"
+
+fps: 25
+resize_width: 640
+resize_height: 480
+flip_vertical: false
+
+dlc_output_path: "/data/dlc"
+dlc2boris_variant: "base"   # "base", "ct", or "di"
+proximity_threshold_mm: 30.0
+min_bout_duration_s: 0.5

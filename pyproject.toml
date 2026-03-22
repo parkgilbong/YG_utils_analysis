@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "fp_behav"
+version = "0.2.0"
+description = "Fiber Photometry & Behavior Analysis Toolkit"
+authors = [{name = "YGKim", email = "parkgilbong@gmail.com"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pandas",
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "seaborn",
+    "opencv-python",
+    "PyYAML",
+    "tqdm",
+    "shapely",
+    "reportlab",
+    "moviepy",
+    "Pillow",
+]
+
+[project.optional-dependencies]
+tdt = ["tdt"]
+dev = ["pytest", "black", "ruff"]
+
+[project.urls]
+Repository = "https://github.com/parkgilbong/YG_utils_analysis"
+
+[project.scripts]
+fp-preprocess     = "fp_behav.cli.fp_commands:fp_preprocess"
+fp-preprocess-2ch = "fp_behav.cli.fp_commands:fp_preprocess_2ch"
+fp-epoch          = "fp_behav.cli.fp_commands:fp_epoch"
+fp-peak           = "fp_behav.cli.fp_commands:fp_peak"
+behav-preprocess  = "fp_behav.cli.behavior_commands:behav_preprocess"
+behav-dlc2boris   = "fp_behav.cli.behavior_commands:behav_dlc2boris"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
